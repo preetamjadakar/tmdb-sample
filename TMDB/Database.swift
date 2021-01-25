@@ -8,7 +8,13 @@
 import Foundation
 import CoreData
 
-class Database {
+protocol StorageType {
+    var context: NSManagedObjectContext { get }
+    func saveContext()
+    func clearStorage()
+}
+
+class Database: StorageType {
     static let shared = Database()
     private var persistentContainer: NSPersistentContainer!
 
@@ -26,7 +32,6 @@ class Database {
         guard notificationContext !== context else {
             return
         }
-
         context.perform {
             self.context.mergeChanges(fromContextDidSave: notification)
         }

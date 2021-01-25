@@ -17,13 +17,26 @@ class MoviesViewModel {
     var shouldFetchSavedData = true
     
     var errorCallBack: ((String) -> Void)?
+    private var storageType: StorageType!
+    
+    init(storage: StorageType) {
+        storageType = storage
+    }
+    
+    func markFavorite(for index: Int) {
+        let movieModel = dataSource[index]
+        //update coreData
+        movieModel.setValue(!movieModel.isFavorited, forKey: favoritesKey)
+        movieModel.setValue(Date(), forKey: favoritedDateKey)
+        storageType.saveContext()
+    }
     
     func fetchFirstPageData(completion: @escaping(Bool) -> Void) {
         currentPage = 1
         dataSource = []
         self.isNetworkAvailable { (available) in
             if available {
-                Database.shared.clearStorage()
+                self.storageType.clearStorage()
                 self.fetchMovies(completion)
             } else {
                 self.loadFetchedData(completion)
@@ -52,7 +65,7 @@ class MoviesViewModel {
         request.fetchOffset = (currentPage-1)*pageSize
         request.fetchLimit = pageSize
         do {
-            let movies = try Database.shared.context.fetch(request)
+            let movies = try storageType.context.fetch(request)
             shouldFetchSavedData = movies.count > 0
             dataSource.append(contentsOf: movies)
             completion(true)
@@ -75,10 +88,10 @@ class MoviesViewModel {
                 }
                 let decoder = JSONDecoder()
                 // Assign the NSManagedIbject Context to the decoder
-                decoder.userInfo[codingUserInfoKeyManagedObjectContext] = Database.shared.context
+                decoder.userInfo[codingUserInfoKeyManagedObjectContext] = self?.storageType.context
                 let response = try decoder.decode(MoviesResponseModel.self, from: data)
                 self?.totalPages = response.total_pages
-                Database.shared.saveContext()
+                self?.storageType.saveContext()
                 self?.loadFetchedData { (success) in
                     completion(success)
                 }

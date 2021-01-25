@@ -10,7 +10,7 @@ import CoreData
 
 class MoviesViewController: UIViewController, Alertable {
     @IBOutlet weak var collectionView: UICollectionView!
-    lazy var viewModel = MoviesViewModel()
+    lazy var viewModel = MoviesViewModel(storage: Database.shared)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -96,11 +96,7 @@ extension MoviesViewController: UICollectionViewDelegate, UICollectionViewDataSo
 extension MoviesViewController: MovieCollectionViewCellDelegate {
     func favoritesButtonClicked(cell: MovieCollectionViewCell) {
         guard let indexPath = collectionView.indexPath(for: cell) else { return }
-        let movieModel = viewModel.dataSource[indexPath.item]
-        //update coreData
-        movieModel.setValue(!movieModel.isFavorited, forKey: favoritesKey)
-        movieModel.setValue(Date(), forKey: favoritedDateKey)
-        Database.shared.saveContext()
+        viewModel.markFavorite(for: indexPath.item)
         collectionView.reloadItems(at: [indexPath])
     }
 }
