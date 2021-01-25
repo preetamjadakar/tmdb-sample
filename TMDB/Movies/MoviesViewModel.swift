@@ -15,7 +15,9 @@ class MoviesViewModel {
     var pageSize = 20
     var totalPages = Int()
     var shouldFetchSavedData = true
-
+    
+    var errorCallBack: ((String) -> Void)?
+    
     func fetchFirstPageData(completion: @escaping(Bool) -> Void) {
         currentPage = 1
         dataSource = []
@@ -55,25 +57,33 @@ class MoviesViewModel {
             dataSource.append(contentsOf: movies)
             completion(true)
         } catch {
+            self.errorCallBack?(error.localizedDescription)
             completion(false)
         }
     }
     
     private func fetchMovies(_ completion: @escaping(Bool) -> Void) {
         guard let urlString = URL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=34c902e6393dc8d970be5340928602a7&language=en-US&page=\(currentPage)") else { return }
-        URLSession.shared.dataTask(with: urlString) { (data, response, error) in
-            guard let data = data else { return }
+        URLSession.shared.dataTask(with: urlString) {[weak self] (data, response, error) in
+            guard let data = data else {
+                self?.errorCallBack?(error?.localizedDescription ?? defaultErrorMessage)
+                return
+            }
             do {
+                guard let codingUserInfoKeyManagedObjectContext = CodingUserInfoKey.managedObjectContext else {
+                    fatalError("Failed to retrieve managed object context")
+                }
                 let decoder = JSONDecoder()
                 // Assign the NSManagedIbject Context to the decoder
-                decoder.userInfo[CodingUserInfoKey(rawValue: "context")!] = Database.shared.context
+                decoder.userInfo[codingUserInfoKeyManagedObjectContext] = Database.shared.context
                 let response = try decoder.decode(MoviesResponseModel.self, from: data)
-                self.totalPages = response.total_pages
+                self?.totalPages = response.total_pages
                 Database.shared.saveContext()
-                self.loadFetchedData { (success) in
+                self?.loadFetchedData { (success) in
                     completion(success)
                 }
             } catch {
+                self?.errorCallBack?(error.localizedDescription)
                 completion(false)
             }
         }.resume()

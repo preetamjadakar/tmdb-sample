@@ -8,25 +8,36 @@
 import UIKit
 import CoreData
 
-class FavoriteMoviesViewController: UIViewController {
+class FavoriteMoviesViewController: UIViewController, Alertable {
     
-    let viewModel = FavoriteMoviesViewModel()
+    lazy var viewModel = FavoriteMoviesViewModel()
     
     @IBOutlet weak var collectionView: UICollectionView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        setupUI()
+        setupBinding()
+    }
+    
+    fileprivate func setupUI() {
         collectionView.register(UINib.init(nibName: "MovieCollectionViewCell", bundle: nil), forCellWithReuseIdentifier: MovieCollectionViewCell.identifier)
+    }
+    
+    fileprivate func setupBinding() {
+        viewModel.errorCallBack = { [weak self] message in
+            DispatchQueue.main.async {
+                self?.displayAlert(title: errorTitle, message: message)
+            }
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         viewModel.loadFavorites { _ in
             DispatchQueue.main.async { [weak self] in
-                guard let self = self else {return}
-                self.collectionView.reloadData()
-                self.collectionView.isHidden = self.viewModel.dataSource.count == 0
+                self?.collectionView.reloadData()
+                self?.collectionView.isHidden = self?.viewModel.dataSource.count == 0
             }
         }
     }

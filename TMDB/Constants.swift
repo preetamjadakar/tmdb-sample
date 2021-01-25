@@ -7,6 +7,9 @@
 
 import Foundation
 
+let entityName = "Movie"
 let favoritesKey = "isFavorited"
 let favoritedDateKey = "dateAdded"
+let errorTitle = "Error!"
+let defaultErrorMessage = "Something went wrong!"
 
