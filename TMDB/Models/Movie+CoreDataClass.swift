@@ -25,7 +25,7 @@ public class Movie: NSManagedObject, Codable {
         // return the context from the decoder userinfo dictionary
         guard let contextUserInfoKey = CodingUserInfoKey(rawValue: "context"),
         let managedObjectContext = decoder.userInfo[contextUserInfoKey] as? NSManagedObjectContext,
-        let entity = NSEntityDescription.entity(forEntityName: "Movie", in: managedObjectContext)
+        let entity = NSEntityDescription.entity(forEntityName: entityName, in: managedObjectContext)
         else {
             fatalError("decode failure")
         }

@@ -66,7 +66,7 @@ class Database {
         }
         
         let managedObjectContext = persistentContainer.viewContext
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Movie")
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
         // NSBatchDeleteRequest is not supported for in-memory stores
         if isInMemoryStore {
             do {

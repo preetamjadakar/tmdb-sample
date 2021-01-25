@@ -10,7 +10,7 @@ import CoreData
 
 class FavoriteMoviesViewModel {
     var dataSource = [Movie]()
-
+    var errorCallBack: ((String) -> Void)?
     
     func loadFavorites(_ completion: @escaping(Bool) -> Void) {
         let request: NSFetchRequest<Movie> = Movie.fetchRequest()
@@ -22,7 +22,7 @@ class FavoriteMoviesViewModel {
             dataSource = try Database.shared.context.fetch(request)
             completion(true)
         } catch {
-            print("Fetch failed")
+            self.errorCallBack?(error.localizedDescription)
             completion(false)
         }
     }

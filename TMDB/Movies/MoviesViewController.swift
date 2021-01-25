@@ -8,26 +8,37 @@
 import UIKit
 import CoreData
 
-class MoviesViewController: UIViewController {
+class MoviesViewController: UIViewController, Alertable {
     @IBOutlet weak var collectionView: UICollectionView!
-    let viewModel = MoviesViewModel()
-    
+    lazy var viewModel = MoviesViewModel()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        setupUI()
+        setupBinding()
+        fetchAndLoadFirstPageData()
+    }
+    
+    fileprivate func setupUI() {
         collectionView.register(UINib.init(nibName: "MovieCollectionViewCell", bundle: nil), forCellWithReuseIdentifier: MovieCollectionViewCell.identifier)
-
-        self.fetchAndLoadFirstPageData()
         
         let refresher = UIRefreshControl()
-        self.collectionView!.alwaysBounceVertical = true
-        refresher.tintColor = UIColor.red
+        refresher.tintColor = .systemRed
         refresher.addTarget(self, action: #selector(fetchAndLoadFirstPageData), for: .valueChanged)
-        self.collectionView.refreshControl = refresher
+        collectionView.refreshControl = refresher
+    }
+    
+    fileprivate func setupBinding() {
+        viewModel.errorCallBack = { [weak self] message in
+            DispatchQueue.main.async {
+                self?.displayAlert(title: errorTitle, message: message)
+            }
+        }
     }
     
     @objc func fetchAndLoadFirstPageData() {
-        self.collectionView.refreshControl?.beginRefreshing()
+        collectionView.refreshControl?.beginRefreshing()
         viewModel.fetchFirstPageData { _ in
             DispatchQueue.main.async {
                 self.collectionView.reloadData()
@@ -53,7 +64,7 @@ extension MoviesViewController: UICollectionViewDelegate, UICollectionViewDataSo
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let itemWidth = (collectionView.frame.size.width - 10) / 2
-        let itemHeight = itemWidth*1.8
+        let itemHeight = itemWidth*1.8 //to maintain the aspect ratio of movie-poster
         return CGSize(width: itemWidth, height: itemHeight)
     }
     
@@ -62,11 +73,8 @@ extension MoviesViewController: UICollectionViewDelegate, UICollectionViewDataSo
             viewModel.fetchNextPageData { (success) in
                 if success {
                     DispatchQueue.main.async { [weak self] in
-                        guard let self = self else {return}
-                        self.collectionView.reloadData()
+                        self?.collectionView.reloadData()
                     }
-                } else {
-                    print("fetch failed")
                 }
             }
         }
