@@ -10,7 +10,7 @@ import CoreData
 
 class FavoriteMoviesViewController: UIViewController, Alertable {
     
-    lazy var viewModel = FavoriteMoviesViewModel()
+    lazy var viewModel = FavoriteMoviesViewModel(storage: Database.shared)
     
     @IBOutlet weak var collectionView: UICollectionView!
     
@@ -68,12 +68,8 @@ extension FavoriteMoviesViewController: UICollectionViewDelegate, UICollectionVi
 extension FavoriteMoviesViewController: MovieCollectionViewCellDelegate {
     func favoritesButtonClicked(cell: MovieCollectionViewCell) {
         guard let indexPath = collectionView.indexPath(for: cell) else { return }
-        let movieModel = viewModel.dataSource[indexPath.item]
-        //update coreData
-        movieModel.setValue(!movieModel.isFavorited, forKey: favoritesKey)
-        Database.shared.saveContext()
-        viewModel.dataSource.remove(at: indexPath.item)
-        self.collectionView.isHidden = self.viewModel.dataSource.count == 0
+        viewModel.markFavorite(for: indexPath.row)
+        collectionView.isHidden = viewModel.dataSource.count == 0
         collectionView.deleteItems(at: [indexPath])
     }
 }
